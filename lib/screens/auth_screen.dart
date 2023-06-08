@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:chat_app/colors.dart';
-import 'package:chat_app/text_widget.dart';
-import 'package:chat_app/user_image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+
+import '../widgets/elevated_button_widget.dart';
+import '../widgets/text_form_field_widget.dart';
+import '../widgets/text_widget.dart';
+import '../widgets/user_image_picker.dart';
 
 final _firebase = FirebaseAuth.instance;
 
@@ -23,6 +27,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _isLogin = true;
   var _enteredEmail = '';
   var _enteredPassword = '';
+  var _enteredUsername = '';
   File? _enteredImage;
   var _isAuthenticating = false;
 
@@ -53,7 +58,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
         await storageRef.putFile(_enteredImage!);
         final imageUrl = await storageRef.getDownloadURL();
-        print(imageUrl);
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+          'username': _enteredUsername,
+          'email': _enteredEmail,
+          'image_url': imageUrl,
+        });
       }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -74,24 +87,25 @@ class _AuthScreenState extends State<AuthScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(colors: [
-            Color(0xffFF6A88),
-            Color(0xffFF9A8B),
+            bbPrimary,
+            bbSecondary,
           ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               children: [
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-                  width: 200,
-                  child: const Icon(
-                    Icons.chat_rounded,
-                    size: 200,
-                    color: Colors.white,
-                  ),
+                const Icon(
+                  Icons.chat_rounded,
+                  size: 200,
+                  color: Colors.white,
                 ),
+                const BBTextWidget(
+                  text: 'CandyChat',
+                  size: 45,
+                  weight: FontWeight.w800,
+                ),
+                const Gap(15),
                 Card(
                   margin:
                       const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
@@ -115,77 +129,32 @@ class _AuthScreenState extends State<AuthScreen> {
                                     },
                                   )
                                 : const SizedBox(),
-                            TextFormField(
-                              decoration: const InputDecoration(
-                                label: BBTextWidget(
-                                  text: 'Email address',
-                                  color: bbPrimary,
-                                ),
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: bbPrimary, width: 1.5),
-                                ),
-                              ),
-                              autocorrect: false,
-                              keyboardType: TextInputType.emailAddress,
-                              textCapitalization: TextCapitalization.none,
-                              validator: (value) {
-                                if (value == null ||
-                                    value.trim().isEmpty ||
-                                    !value.contains('@')) {
-                                  return 'Please enter a valid email address';
-                                }
-                                return null;
-                              },
+                            BBTextFormField(
+                              label: 'Email address',
+                              textInputType: TextInputType.emailAddress,
                               onSaved: (newValue) {
                                 _enteredEmail = newValue!;
                               },
                             ),
-                            TextFormField(
-                              decoration: const InputDecoration(
-                                label: BBTextWidget(
-                                  text: 'Password',
-                                  color: bbPrimary,
-                                ),
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: bbPrimary, width: 1.5),
-                                ),
-                              ),
-                              keyboardType: TextInputType.text,
-                              obscureText: true,
-                              validator: (value) {
-                                if (value == null || value.trim().length <= 6) {
-                                  return 'Password must be at least 6 characters long.';
-                                }
-                                return null;
-                              },
+                            if (!_isLogin)
+                              BBTextFormField(
+                                  onSaved: (newValue) {
+                                    _enteredUsername = newValue!;
+                                  },
+                                  label: 'Username',
+                                  textInputType: TextInputType.text),
+                            BBTextFormField(
+                              label: 'Password',
+                              textInputType: TextInputType.text,
                               onSaved: (newValue) {
                                 _enteredPassword = newValue!;
                               },
                             ),
                             const Gap(25),
                             !_isAuthenticating
-                                ? ElevatedButton(
-                                    style: ButtonStyle(
-                                      shape: MaterialStateProperty.all<
-                                          RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(25),
-                                        ),
-                                      ),
-                                      padding: MaterialStateProperty.all(
-                                        const EdgeInsets.symmetric(
-                                            vertical: 13, horizontal: 25),
-                                      ),
-                                    ),
+                                ? BBElevatedButton(
                                     onPressed: _submit,
-                                    child: BBTextWidget(
-                                      text: _isLogin ? 'Log in' : 'Sign up',
-                                      weight: FontWeight.bold,
-                                    ),
-                                  )
+                                    text: _isLogin ? 'Log in' : 'Sign up')
                                 : const CircularProgressIndicator(),
                             const Gap(10),
                             !_isAuthenticating
@@ -198,7 +167,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                           ? Container()
                                           : const BBTextWidget(
                                               text: 'Already have an account?',
-                                              color: bbBlack),
+                                              color: bbBrown),
                                       TextButton(
                                         onPressed: () {
                                           setState(() {
@@ -210,7 +179,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                               ? 'Create an account'
                                               : 'Log in',
                                           weight: FontWeight.w800,
-                                          color: bbPrimary,
+                                          color: bbTertiary,
                                           decoration: TextDecoration.underline,
                                         ),
                                       ),

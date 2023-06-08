@@ -1,11 +1,12 @@
-import 'package:chat_app/auth_screen.dart';
-import 'package:chat_app/chat_screen.dart';
 import 'package:chat_app/colors.dart';
-import 'package:chat_app/splash_screen.dart';
+import 'package:chat_app/screens/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
+import 'screens/auth_screen.dart';
+import 'screens/chat_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
 
     final theme = ThemeData.from(
       colorScheme: colorScheme,
+      textTheme: GoogleFonts.ubuntuTextTheme(),
     );
     return MaterialApp(
       title: 'Flutter Chat',
