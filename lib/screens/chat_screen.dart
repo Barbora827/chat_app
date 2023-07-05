@@ -39,16 +39,6 @@ class ChatScreen extends StatelessWidget {
         ),
         body: Column(
           children: const [
-            Gap(30),
-            SizedBox(
-              width: 300,
-              child: BBTextWidget(
-                text: "Your chat with Meow'lin",
-                size: 25,
-                weight: FontWeight.w600,
-                color: bbPrimary,
-              ),
-            ),
             Expanded(
               child: ChatMessages(),
             ),
